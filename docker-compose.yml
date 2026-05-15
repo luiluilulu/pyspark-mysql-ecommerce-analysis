@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sql_practice_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Root@123456
+      MYSQL_DATABASE: taobao_analysis
+      MYSQL_USER: sql_practice
+      MYSQL_PASSWORD: SqlPractice@123456
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  mysql_data:

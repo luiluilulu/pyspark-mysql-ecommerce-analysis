@@ -1,0 +1,25 @@
+# secrets
+.env
+
+# data files
+data/
+*.csv
+*.parquet
+*.crc
+
+# python cache
+__pycache__/
+*.pyc
+
+# local environments
+.venv/
+env/
+
+# spark / hadoop local outputs
+.spark-warehouse/
+metastore_db/
+derby.log
+
+# editor / assistant local files
+.vscode/
+.claude/
