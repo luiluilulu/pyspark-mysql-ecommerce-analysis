@@ -1,10 +1,10 @@
 -- 总行数
 SELECT COUNT(*) AS total_cnt FROM user_behavior;
 
---总用户数
+-- 总用户数
 SELECT COUNT(DISTINCT user_id) AS user_cnt FROM user_behavior;
 
---总商品数
+-- 总商品数
 SELECT COUNT(DISTINCT item_id) AS item_cnt FROM user_behavior;
 
 -- 看各类行为的数量,降序排序
@@ -26,7 +26,7 @@ FROM user_behavior
 GROUP BY behavior_hour
 ORDER BY behavior_hour;
 
---购买王(前十名)
+-- 购买王(前十名)
 SELECT user_id,COUNT(*) AS buy_cnt
 FROM user_behavior
 WHERE behavior_type='buy'
@@ -34,7 +34,7 @@ GROUP BY user_id
 ORDER BY buy_cnt DESC
 LIMIT 10;
 
---热门商品TOP10 
+-- 热门商品TOP10 
 SELECT item_id , COUNT(*) AS all_behavior_cnt
 FROM user_behavior
 GROUP BY item_id
