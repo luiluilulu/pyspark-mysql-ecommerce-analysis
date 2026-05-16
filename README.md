@@ -1,16 +1,16 @@
-# PySpark MySQL 电商用户行为分析项目
+# PySpark + MySQL 电商用户行为分析项目
 
-这是一个用于练习 SQL 和数据工程流程的实战项目。项目基于淘宝用户行为数据集，完成从原始 CSV 数据读取、PySpark 清洗、MySQL 存储连接测试，到后续 SQL 聚合分析和 Python 可视化的完整链路。
+这是一个用于练习数据工程流程和 SQL 分析的实战项目。项目基于公开电商用户行为数据集，完成从原始 CSV 数据处理、PySpark 清洗、MySQL 入库，到 SQL 聚合分析的完整流程。
 
 ## 项目流程
 
 ```text
 原始 CSV 数据
     -> PySpark 数据清洗
-    -> Parquet 清洗结果
-    -> MySQL 数据表
+    -> 清洗后的 Parquet 数据
+    -> MySQL user_behavior 表
     -> SQL 聚合分析
-    -> Python 可视化
+    -> 后续 Python 可视化
 ```
 
 ## 技术栈
@@ -20,7 +20,7 @@
 - MySQL 8.0
 - Docker Compose
 - PyMySQL
-- MySQL JDBC Driver
+- MySQL Connector/J
 - Parquet
 
 ## 项目结构
@@ -28,17 +28,28 @@
 ```text
 .
 ├── data/                         # 本地数据目录，不提交到 Git
+├── drivers/                      # 本地 JDBC jar，不提交到 Git
 ├── etl/
 │   ├── check_raw_data.py          # 检查原始 CSV 数据
-│   ├── clean_user_behavior.py     # 清洗用户行为数据并输出 Parquet
+│   ├── clean_user_behavior.py     # 清洗用户行为数据并写出 Parquet
 │   └── check_cleaned_data.py      # 检查清洗后的 Parquet 数据
 ├── load/
-│   └── test_spark_mysql_connection.py  # 测试 Spark JDBC 连接 MySQL
-├── test/                         # 早期连接、建表、插入查询测试脚本
-├── config.py                     # 读取 .env 中的 MySQL 配置
-├── create_user_behavior_table.py # 创建正式业务表
-├── check_user_behavior_table.py  # 检查业务表结构
-├── docker-compose.yml            # MySQL 容器配置
+│   ├── load_to_mysql.py           # 将清洗后的样本数据写入 MySQL
+│   ├── test_spark_mysql_connection.py
+│   └── truncate_user_behavior.py
+├── sql/
+│   ├── analysis.sql               # SQL 分析语句
+│   └── run_analysis.py            # 使用 Python 执行 analysis.sql
+├── test/                          # 早期学习和测试脚本
+├── utils/
+│   ├── config_utils.py            # 读取 .env 并提供 MySQL 配置
+│   ├── mysql_utils.py             # MySQL 工具函数
+│   ├── path_utils.py              # 项目常用路径
+│   └── spark_utils.py             # SparkSession 工具函数
+├── config.py                      # 早期配置文件，后续可逐步替换
+├── create_user_behavior_table.py
+├── check_user_behavior_table.py
+├── docker-compose.yml
 └── .gitignore
 ```
 
@@ -57,29 +68,45 @@ conda activate sql-practice
 python -m pip install python-dotenv pymysql pyspark
 ```
 
-### 3. 配置 Java 和 Hadoop 工具
+### 3. 配置 Java 和 Hadoop Windows 工具
 
-PySpark 本地运行需要 Java 17。
+PySpark 本地运行需要 Java。本项目使用 Java 17。
 
 ```powershell
 java -version
 ```
 
-Windows 本地写 Parquet 还需要 Hadoop Windows 工具，目录示例：
+期望版本：
+
+```text
+17.x
+```
+
+Windows 本地写 Parquet 时，还需要 Hadoop Windows 辅助文件：
 
 ```text
 C:\hadoop\bin\winutils.exe
 C:\hadoop\bin\hadoop.dll
 ```
 
-对应环境变量：
+建议配置环境变量：
 
 ```text
 JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.19.10-hotspot
 HADOOP_HOME=C:\hadoop
 ```
 
-## MySQL 启动
+### 4. 准备 MySQL JDBC 驱动
+
+下载 MySQL Connector/J，并将 jar 文件放到：
+
+```text
+drivers/mysql-connector-j-8.4.0.jar
+```
+
+`drivers/*.jar` 已加入 `.gitignore`，不会提交到 Git。
+
+## 启动 MySQL
 
 使用 Docker Compose 启动 MySQL：
 
@@ -87,13 +114,13 @@ HADOOP_HOME=C:\hadoop
 docker compose up -d
 ```
 
-检查容器：
+检查容器状态：
 
 ```powershell
 docker ps
 ```
 
-项目默认使用：
+项目默认数据库配置：
 
 ```text
 host: 127.0.0.1
@@ -104,7 +131,7 @@ user: sql_practice
 
 ## 配置 .env
 
-项目根目录创建 `.env`：
+在项目根目录创建 `.env`：
 
 ```env
 MYSQL_HOST=127.0.0.1
@@ -116,13 +143,15 @@ MYSQL_DATABASE=taobao_analysis
 
 `.env` 已加入 `.gitignore`，不要提交到 Git。
 
-## 数据说明
+## 数据集说明
 
-原始数据文件不提交到仓库，需要手动放到：
+将原始 CSV 文件放到：
 
 ```text
 data/UserBehavior.csv
 ```
+
+原始数据文件不提交到 Git。
 
 字段顺序：
 
@@ -139,69 +168,94 @@ cart  加购
 buy   购买
 ```
 
-## 运行步骤
+## 运行方式
 
-### 1. 测试 Python 连接 MySQL
+所有命令建议在项目根目录执行。
 
-```powershell
-python test/test_mysql_connection.py
-```
-
-### 2. 创建 user_behavior 表
+### 创建 MySQL 表
 
 ```powershell
-python create_user_behavior_table.py
+python -m create_user_behavior_table
 ```
 
-### 3. 检查原始数据
+### 检查原始数据
 
 ```powershell
-python etl/check_raw_data.py
+python -m etl.check_raw_data
 ```
 
-### 4. 清洗数据
+### 清洗数据
 
 ```powershell
-python etl/clean_user_behavior.py
+python -m etl.clean_user_behavior
 ```
 
-清洗后输出：
+输出目录：
 
 ```text
 data/cleaned/user_behavior_cleaned.parquet
 ```
 
-### 5. 检查清洗结果
+### 检查清洗结果
 
 ```powershell
-python etl/check_cleaned_data.py
+python -m etl.check_cleaned_data
 ```
 
-### 6. 测试 Spark 连接 MySQL
+### 导入样本数据到 MySQL
 
 ```powershell
-python load/test_spark_mysql_connection.py
+python -m load.load_to_mysql
 ```
+
+当前导入逻辑：
+
+- 读取清洗后的 Parquet 数据
+- 取 10000 行样本
+- 先清空 `user_behavior` 表
+- 再通过 JDBC 追加写入 MySQL
+
+### 测试 Spark 连接 MySQL
+
+```powershell
+python -m load.test_spark_mysql_connection
+```
+
+### 执行 SQL 分析
+
+```powershell
+python -m sql.run_analysis
+```
+
+## 当前 SQL 分析内容
+
+`sql/analysis.sql` 当前包含：
+
+- 总行数
+- 去重用户数
+- 去重商品数
+- 行为类型分布
+- 每日 PV / UV
+- 每小时行为量
+- 购买次数 TOP10 用户
+- 行为次数 TOP10 商品
 
 ## 当前进度
 
 - 已完成 Docker MySQL 环境配置
 - 已完成 Python 读取 `.env` 并连接 MySQL
-- 已完成 MySQL 建表测试
+- 已完成 MySQL 建表
 - 已完成 PySpark 读取原始 CSV
-- 已完成 PySpark 清洗并输出 Parquet
-- 已完成 Spark JDBC 连接 MySQL 测试
-
-## 后续计划
-
-- 将清洗后的 Parquet 数据写入 MySQL
-- 编写 SQL 聚合分析脚本
-- 完成用户行为指标分析
-- 使用 Python 绘制可视化图表
+- 已完成 PySpark 清洗并写出 Parquet
+- 已完成 Spark 通过本地 JDBC jar 连接 MySQL
+- 已完成清洗样本数据写入 MySQL
+- 已完成 Python 执行 SQL 分析
+- 已将路径、配置、Spark、MySQL 公共逻辑抽取到 `utils/`
 
 ## 注意事项
 
-- `data/` 目录不提交到 Git
-- `.env` 不提交到 Git
-- JDBC 驱动当前通过 Spark 自动下载
-- Windows 本地运行 Spark 需要正确配置 Java 17、`winutils.exe` 和 `hadoop.dll`
+- 不要提交 `.env`
+- 不要提交 `data/`
+- 不要提交 `drivers/` 下的 JDBC jar
+- 建议从项目根目录使用 `python -m ...` 方式运行脚本
+- VS Code 的运行配置可放在本地 `.vscode/launch.json`

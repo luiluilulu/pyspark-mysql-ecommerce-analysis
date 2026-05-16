@@ -1,6 +1,7 @@
 from utils.config_utils import MYSQL_CONFIG
 from utils.path_utils import CLEANED_DATA_PATH
 from utils.spark_utils import create_spark
+from utils.mysql_utils import truncate_table
 
 def load_to_mysql():
     spark =create_spark("LoadUserBehaviorToMySQL",with_mysql=True)
@@ -13,6 +14,11 @@ def load_to_mysql():
     df = spark.read.parquet(str(CLEANED_DATA_PATH))
 
     sample_df = df.limit(10000)
+
+    CLEAR_BEFORE_LOAD = True
+
+    if CLEAR_BEFORE_LOAD:
+        truncate_table("user_behavior")
 
     (sample_df.write
         .format("jdbc") 
