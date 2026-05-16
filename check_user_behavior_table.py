@@ -1,10 +1,9 @@
-import pymysql
-from config import MYSQL_CONFIG
+from utils.mysql_utils import get_mysql_connection
 
 
 def check_table():
     # 连接 MySQL
-    conn = pymysql.connect(**MYSQL_CONFIG)
+    conn = get_mysql_connection()
     cursor = conn.cursor()
 
     # 查看 user_behavior 表结构

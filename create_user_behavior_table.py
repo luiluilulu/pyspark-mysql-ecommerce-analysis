@@ -1,8 +1,7 @@
-import pymysql
-from config import MYSQL_CONFIG
+from utils.mysql_utils import get_mysql_connection
 
 def create_user_behavior_table():
-    conn = pymysql.connect(**MYSQL_CONFIG)
+    conn =get_mysql_connection()
     cursor = conn.cursor()
 
     create_sql = """

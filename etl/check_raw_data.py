@@ -1,16 +1,12 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType,StructField,LongType,StringType
+from utils.path_utils import RAW_DATA_PATH
+from utils.spark_utils import create_spark
 
 def check_raw_data():
 
-    spark = (SparkSession.builder
-             .appName("CheckRawUserBehavior")
-             .master("local[*]")
-             .getOrCreate()
-    )
-    
-    file_path = "data/UserBehavior.csv"
+    spark = create_spark("CheckRawUserBehavior")
 
     schema = StructType([
         StructField("user_id",LongType(),True),
@@ -19,7 +15,7 @@ def check_raw_data():
         StructField("behavior_type",StringType(),True),
         StructField("timestamp",LongType(),True),
     ])
-    df =  spark.read.csv(file_path,header=False,schema=schema)
+    df =  spark.read.csv(str(RAW_DATA_PATH),header=False,schema=schema)
 
     df.show(5)
 

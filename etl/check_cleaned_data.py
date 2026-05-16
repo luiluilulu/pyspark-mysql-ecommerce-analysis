@@ -1,19 +1,11 @@
-from pyspark.sql import SparkSession
+from utils.spark_utils import create_spark
+from utils.path_utils import CLEANED_DATA_PATH
 
+def  check_cleaned_data():
 
-def  check_cleaned_builder():
+    spark = create_spark("CheckCleanedUserBehavior")
 
-    spark = (
-        SparkSession.builder
-        .appName("CheckCleanedUserBehavior")
-        .master("local[4]")
-        .config("spark.driver.memory","4g")
-        .getOrCreate()
-    )
-
-    input_path = "data/cleaned/user_behavior_cleaned.parquet"
-
-    df = spark.read.parquet(input_path)
+    df = spark.read.parquet(str(CLEANED_DATA_PATH))
     
     df.show(5)
 
@@ -29,4 +21,4 @@ def  check_cleaned_builder():
     spark.stop()
 
 if __name__ == "__main__":
-    check_cleaned_builder()
+    check_cleaned_data()

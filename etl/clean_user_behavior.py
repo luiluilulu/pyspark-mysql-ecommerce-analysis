@@ -1,18 +1,11 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col,from_unixtime,to_date,hour
 from pyspark.sql.types import StructType,StructField,LongType,StringType
+from utils.path_utils import RAW_DATA_PATH, CLEANED_DATA_PATH
+from utils.spark_utils import create_spark
 
 def clean_user_behavior():
-    spark = (SparkSession.builder
-                .appName("CheckRawUserBehavior")
-                .master("local[*]")
-                .config("spark.driver.memory","4g")
-                .config("spark.sql.shuffle.partitions","4")
-                .getOrCreate()
-        )
-
-    input_path = "data/UserBehavior.csv"
-    output_path ="data/cleaned/user_behavior_cleaned.parquet"
+    spark = create_spark("CleanUserBehavior")
     schema = StructType([
             StructField("user_id",LongType(),True),
             StructField("item_id",LongType(),True),
@@ -21,7 +14,7 @@ def clean_user_behavior():
             StructField("timestamp",LongType(),True),
         ])
     
-    df = spark.read.csv(input_path,header=False,schema=schema)
+    df = spark.read.csv(str(RAW_DATA_PATH),header=False,schema=schema)
 
     cleaned_df = (
         df 
@@ -31,7 +24,7 @@ def clean_user_behavior():
         .withColumn("behavior_date",to_date(col("behavior_time")))
         .withColumn("behavior_hour",hour(col("behavior_time")))
         .filter(
-            (col("behavior_date") >="2017-11-05") &
+            (col("behavior_date") >="2017-11-25") &
             (col("behavior_date")<="2017-12-03")
         )
         .select(
@@ -45,9 +38,9 @@ def clean_user_behavior():
         )
     )
 
-    cleaned_df.coalesce(4).write.mode("overwrite").parquet(output_path)
+    cleaned_df.coalesce(4).write.mode("overwrite").parquet(str(CLEANED_DATA_PATH))
 
-    print("claened data saved to:",output_path)
+    print("cleaned data saved to:",CLEANED_DATA_PATH)
 
     spark.stop( )
 

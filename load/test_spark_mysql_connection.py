@@ -1,20 +1,8 @@
-from pyspark.sql import SparkSession
-import sys
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(BASE_DIR))
-from config  import MYSQL_CONFIG
+from utils.config_utils import MYSQL_CONFIG
+from utils.spark_utils import create_spark
 
 def test_spark_mysql_connection():
-    spark = (
-        SparkSession.builder
-        .appName("TestSparkMySQLConnection")
-        .master("local[4]")
-        .config("spark.driver.memory","4g")
-        .config("spark.jars.packages","com.mysql:mysql-connector-j:8.4.0")
-        .getOrCreate()
-    )
+    spark = create_spark("TestSparkMySQLConnection",with_mysql=True)
     jdbc_url=(
         f"jdbc:mysql://{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}/"
         f"{MYSQL_CONFIG['database']}?useSSL=false&serverTimezone=Asia/Shanghai"
@@ -33,7 +21,7 @@ def test_spark_mysql_connection():
 
     df.printSchema()
 
-    print("user_behavior 当前行数:",df.count())
+    print("user_behavior current row count:",df.count())
 
     spark.stop()
 

@@ -1,31 +1,16 @@
-import sys
-from pathlib import Path
-
-from pyspark.sql import SparkSession
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str("BASE_DIR"))
-
-from config import MYSQL_CONFIG
+from utils.config_utils import MYSQL_CONFIG
+from utils.path_utils import CLEANED_DATA_PATH
+from utils.spark_utils import create_spark
 
 def load_to_mysql():
-    spark = (
-        SparkSession.builder
-        .appName("LoadUserBehaviorToMySQL")
-        .master("loacl[4]")
-        .config("spark.dirver.memoery","4g")
-        .config("spark.jar.packages","com.mysql:mysql_connection-j:8.4.0")
-        .getOrCreate()
-    )
-
-    input_path = "data/cleaned/user_behavior_cleaned.parquet"
-
+    spark =create_spark("LoadUserBehaviorToMySQL",with_mysql=True)
+    
     jdbc_url = (
         f"jdbc:mysql://{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}/"
         f"{MYSQL_CONFIG['database']}?useSSL=false&serverTimezone=Asia/Shanghai"
     )
 
-    df = spark.read.parquet(input_path)
+    df = spark.read.parquet(str(CLEANED_DATA_PATH))
 
     sample_df = df.limit(10000)
 
