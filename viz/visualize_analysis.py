@@ -3,8 +3,11 @@ from utils.path_utils import VIZ_OUTPUT_DIR
 
 import pandas as pd
 import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 
+ 
 def query_to_df(sql):
     #Execute SQL and return a DataFrame
     conn = get_mysql_connection()
@@ -55,7 +58,48 @@ def plot_daily_pv_uv():
         ORDER BY behavior_date;"""
     df = query_to_df(sql)
 
-    fig = px.line(
+    fig = make_subplots(specs=[
+        [{"secondary_y":True}]
+        ])
+    
+    fig.add_trace(
+        go.Scatter(
+            x=df["behavior_date"],
+            y=df["pv_cnt"],
+            name = "浏览量",
+            mode = 'lines+markers'
+        ),
+        secondary_y=False
+    )
+
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["behavior_date"],
+            y =df["user_cnt"],
+            name="浏览用户数",
+            mode="lines+markers"
+        ),
+        secondary_y=True
+    )   
+
+    fig.update_layout(
+        title = "每日浏览量/浏览用户数",
+        template = "simple_white"
+    )
+
+    fig.update_xaxes(title_text = "日期")
+
+    fig.update_yaxes(
+        title_text = "浏览量",
+        secondary_y=False
+    )
+
+    fig.update_yaxes(
+        title_text = "浏览用户数",
+        secondary_y=True
+    )
+    '''fig = px.line(
         data_frame=df,
         x="behavior_date",
         y=["pv_cnt","user_cnt"],
@@ -66,7 +110,7 @@ def plot_daily_pv_uv():
             "user_cnt":"用户量"
         },
         markers= True
-        )
+        )'''
     save_fig(fig,"daily_pv_uv.html")
 
 def plot_hourly_behavior_count():
