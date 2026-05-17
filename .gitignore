@@ -23,11 +23,12 @@ derby.log
 # editor / assistant local files
 .vscode/
 .claude/
-
 CLAUDE.md
 AGENTS.md
 
-#local result
+#local viz output
 viz/output/
 
 drivers/*.jar
+
+.ipynb_checkpoints/

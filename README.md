@@ -1,6 +1,6 @@
-# PySpark + MySQL 电商用户行为分析项目
+﻿# PySpark + MySQL 电商用户行为分析项目
 
-这是一个用于练习数据工程流程和 SQL 分析的实战项目。项目基于公开电商用户行为数据集，完成从原始 CSV 数据处理、PySpark 清洗、MySQL 入库，到 SQL 聚合分析的完整流程。
+这是一个用于练习数据工程流程和 SQL 分析的实战项目。项目基于公开电商用户行为数据集，完成从原始 CSV 数据处理、PySpark 清洗、MySQL 入库，到 SQL 聚合分析和 Python 可视化的完整流程。
 
 ## 项目流程
 
@@ -10,7 +10,7 @@
     -> 清洗后的 Parquet 数据
     -> MySQL user_behavior 表
     -> SQL 聚合分析
-    -> 后续 Python 可视化
+    -> Python 可视化输出
 ```
 
 ## 技术栈
@@ -21,6 +21,8 @@
 - Docker Compose
 - PyMySQL
 - MySQL Connector/J
+- pandas
+- Plotly
 - Parquet
 
 ## 项目结构
@@ -40,12 +42,16 @@
 ├── sql/
 │   ├── analysis.sql               # SQL 分析语句
 │   └── run_analysis.py            # 使用 Python 执行 analysis.sql
+├── viz/
+│   ├── visualize_analysis.py      # 生成 Plotly 可视化图表
+│   └── output/                    # 图表输出目录，不建议提交到 Git
 ├── test/                          # 早期学习和测试脚本
 ├── utils/
 │   ├── config_utils.py            # 读取 .env 并提供 MySQL 配置
 │   ├── mysql_utils.py             # MySQL 工具函数
 │   ├── path_utils.py              # 项目常用路径
 │   └── spark_utils.py             # SparkSession 工具函数
+├── requirements.txt
 ├── config.py                      # 早期配置文件，后续可逐步替换
 ├── create_user_behavior_table.py
 ├── check_user_behavior_table.py
@@ -65,7 +71,17 @@ conda activate sql-practice
 ### 2. 安装 Python 依赖
 
 ```powershell
-python -m pip install python-dotenv pymysql pyspark
+python -m pip install -r requirements.txt
+```
+
+当前 `requirements.txt` 包含：
+
+```text
+python-dotenv
+pymysql
+pyspark
+pandas
+plotly
 ```
 
 ### 3. 配置 Java 和 Hadoop Windows 工具
@@ -227,6 +243,25 @@ python -m load.test_spark_mysql_connection
 python -m sql.run_analysis
 ```
 
+### 生成可视化图表
+
+```powershell
+python -m viz.visualize_analysis
+```
+
+图表默认输出到：
+
+```text
+viz/output/
+```
+
+当前可视化包括：
+
+- 行为类型分布柱状图
+- 每日 PV / UV 折线图
+- 每小时行为量柱状图
+- 热门商品 TOP10 横向条形图
+
 ## 当前 SQL 分析内容
 
 `sql/analysis.sql` 当前包含：
@@ -250,6 +285,7 @@ python -m sql.run_analysis
 - 已完成 Spark 通过本地 JDBC jar 连接 MySQL
 - 已完成清洗样本数据写入 MySQL
 - 已完成 Python 执行 SQL 分析
+- 已完成 Plotly HTML 可视化输出
 - 已将路径、配置、Spark、MySQL 公共逻辑抽取到 `utils/`
 
 ## 注意事项
@@ -257,5 +293,6 @@ python -m sql.run_analysis
 - 不要提交 `.env`
 - 不要提交 `data/`
 - 不要提交 `drivers/` 下的 JDBC jar
+- 不建议提交 `viz/output/` 下的图表产物
 - 建议从项目根目录使用 `python -m ...` 方式运行脚本
 - VS Code 的运行配置可放在本地 `.vscode/launch.json`

@@ -1,0 +1,5 @@
+python-dotenv
+pymysql
+pyspark
+pandas
+plotly
