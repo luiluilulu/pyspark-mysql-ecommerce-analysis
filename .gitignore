@@ -28,6 +28,6 @@ CLAUDE.md
 AGENTS.md
 
 #local result
-viz/output/*.html
+viz/output/
 
 drivers/*.jar
