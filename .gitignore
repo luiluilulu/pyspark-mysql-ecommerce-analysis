@@ -27,6 +27,7 @@ derby.log
 CLAUDE.md
 AGENTS.md
 
-
+#local result
+viz/output/*.html
 
 drivers/*.jar
