@@ -41,5 +41,16 @@ GROUP BY item_id
 ORDER BY all_behavior_cnt DESC
 LIMIT 10; 
 
--- 转化漏斗
-WITH pv_to_
+-- 转化率漏斗
+
+WITH user_state_number AS(
+    SELECT 
+        COUNT(DISTINCT CASE WHEN behavior_type = 'pv' THEN user_id END) AS pv_user_cnt,
+        COUNT(DISTINCT CASE WHEN behavior_type = 'cart' THEN user_id END) AS cart_user_cnt,
+        COUNT(DISTINCT CASE WHEN behavior_type = 'fav' THEN user_id END) AS fav_user_cnt,
+        COUNT(DISTINCT CASE WHEN behavior_type = 'buy' THEN user_id END) AS buy_user_cnt,
+    FROM user_behavior
+    WHERE
+),
+
+
