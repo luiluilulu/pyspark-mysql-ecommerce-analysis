@@ -85,3 +85,46 @@ conversion_rate AS (
 
 SELECT *
 FROM conversion_rate;
+
+
+
+-- 复购
+WITH user_buy_cnt AS (
+    SELECT 
+        user_id,
+        COUNT(*) AS buy_cnt
+    FROM user_behavior
+    WHERE behavior_type = 'buy'
+    GROUP BY user_id
+),
+repurchase_summary AS (
+    SELECT
+        COUNT(*) AS buy_user_cnt,
+        COUNT(CASE WHEN buy_cnt >=2 THEN 1 END) AS repurchase_user_cnt
+    FROM user_buy_cnt
+    )
+
+SELECT
+    buy_user_cnt,
+    repurchase_user_cnt,
+    ROUND(
+        CASE 
+            WHEN buy_user_cnt = 0 THEN 0
+            ELSE repurchase_user_cnt *100.0 / buy_user_cnt
+        END,
+        2)  AS repurchase_rate
+FROM repurchase_summary;
+
+-- 类目热度分析
+SELECT 
+    category_id,
+    COUNT(*) AS behavior_cnt,
+    COUNT(CASE WHEN behavior_type = 'pv' THEN 1 END) AS pv_cnt,
+    COUNT(CASE WHEN behavior_type IN ('fav','cart') THEN 1 END ) AS cart_fav_cnt,
+    COUNT(CASE WHEN behavior_type = 'buy' THEN 1 END) AS buy_cnt,
+    COUNT(DISTINCT CASE WHEN behavior_type = 'buy' THEN user_id END) AS buy_user_cnt
+
+FROM user_behavior
+GROUP BY category_id
+ORDER BY behavior_cnt DESC
+LIMIT 10;
