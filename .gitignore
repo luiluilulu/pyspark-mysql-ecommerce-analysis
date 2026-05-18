@@ -26,9 +26,11 @@ derby.log
 CLAUDE.md
 AGENTS.md
 
-#local viz output
+# local viz output
 viz/output/
 
 drivers/*.jar
 
 .ipynb_checkpoints/
+
+sql/sql_practice_mysql.session.sql
