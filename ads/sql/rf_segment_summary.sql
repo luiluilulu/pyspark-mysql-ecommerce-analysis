@@ -1,3 +1,4 @@
+-- RF
 WITH analysis_date AS(
     SELECT MAX(behavior_date) AS max_date
     FROM user_behavior
