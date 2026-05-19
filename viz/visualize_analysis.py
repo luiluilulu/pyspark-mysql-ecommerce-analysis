@@ -26,10 +26,9 @@ def save_fig(fig,filename):
 
 def plot_behavior_type_count():
     sql = """
-        SELECT behavior_type , COUNT(*) AS cnt
-        FROM user_behavior
-        GROUP BY behavior_type
-        ORDER BY COUNT(*) DESC;"""
+        SELECT *
+        FROM ads_behavior_type_count
+        ORDER BY cnt DESC;"""
 
     df = query_to_df(sql)
 
@@ -51,10 +50,8 @@ def plot_behavior_type_count():
     
 def plot_daily_pv_uv():
     sql = """
-        SELECT behavior_date,COUNT(*) AS pv_cnt,COUNT(DISTINCT user_id) AS user_cnt
-        FROM user_behavior
-        WHERE behavior_type='pv'
-        GROUP BY behavior_date
+        SELECT behavior_date,pv_cnt,user_cnt
+        FROM ads_daily_pv_uv
         ORDER BY behavior_date;"""
     df = query_to_df(sql)
 
@@ -84,8 +81,9 @@ def plot_daily_pv_uv():
     )   
 
     fig.update_layout(
-        title = "每日浏览量/浏览用户数",
-        template = "simple_white"
+        title = "每日浏览量 / 浏览用户数",
+        template = "plotly_white",
+        hovermode ="x unified"
     )
 
     fig.update_xaxes(title_text = "日期")
@@ -115,9 +113,8 @@ def plot_daily_pv_uv():
 
 def plot_hourly_behavior_count():
     sql = """
-        SELECT behavior_hour, COUNT(*) AS behavior_cnt
-        FROM user_behavior
-        GROUP BY behavior_hour
+        SELECT behavior_hour,behavior_cnt
+        FROM ads_hourly_behavior_count
         ORDER BY behavior_hour;"""
     df = query_to_df(sql)
     fig = px.bar(
@@ -141,9 +138,8 @@ def plot_hourly_behavior_count():
     
 def plot_top10_items():
     sql = """
-        SELECT item_id , COUNT(*) AS all_behavior_cnt
-        FROM user_behavior
-        GROUP BY item_id
+        SELECT item_id ,all_behavior_cnt
+        FROM ads_top10_item_id
         ORDER BY all_behavior_cnt DESC
         LIMIT 10; """
     df = query_to_df(sql)

@@ -39,8 +39,7 @@ def run_spark_sql_file_to_mysql(
     )
 #files
 def run_spark_sql_files_to_mysql(
-        sql_paths, 
-        sql_dir=ADS_SQL_PATH, 
+        sql_paths,  
         source_path=CLEANED_DATA_PATH,
         view_name="user_behavior",
         ):

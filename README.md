@@ -1,34 +1,48 @@
-﻿# PySpark + MySQL 电商用户行为分析项目
+# PySpark + MySQL 电商用户行为分析项目
 
-这是一个用于练习数据工程流程和 SQL 分析的实战项目。项目基于公开电商用户行为数据集，完成从原始 CSV 数据处理、PySpark 清洗、MySQL 入库，到 SQL 聚合分析和 Python 可视化的完整流程。
+这是一个面向数据开发与数据分析练习的电商用户行为分析项目。项目基于公开用户行为数据集，完成从原始 CSV、PySpark 清洗、Parquet 明细落地、Spark SQL 全量聚合、MySQL ADS 结果表，到 Plotly 可视化输出的完整链路。
+
+项目同时保留一张 MySQL 样本明细表 `user_behavior`，用于 SQL 练习和小样本验证；正式报表与可视化优先读取 Spark 全量聚合后的 `ads_*` 结果表。
 
 ## 项目流程
 
 ```text
-原始 CSV 数据
-    -> PySpark 数据清洗
-    -> 清洗后的 Parquet 数据
-    -> MySQL user_behavior 表
-    -> SQL 聚合分析
-    -> Python 可视化输出
+原始 CSV
+    -> PySpark 全量清洗
+    -> Parquet 明细层
+    -> Spark SQL 全量聚合
+    -> MySQL ads_* 结果表
+    -> Plotly 可视化
+```
+
+同时保留样本链路：
+
+```text
+Parquet 明细层
+    -> MySQL user_behavior 10000 行样本
+    -> SQL 练习与小样本验证
 ```
 
 ## 技术栈
 
 - Python 3.11
-- PySpark
+- PySpark / Spark SQL
+- Parquet
 - MySQL 8.0
 - Docker Compose
 - PyMySQL
 - MySQL Connector/J
 - pandas
 - Plotly
-- Parquet
+- Git
 
 ## 项目结构
 
 ```text
 .
+├── ads/
+│   ├── build_ads.py              # 扫描 ads/sql/*.sql，批量构建 MySQL ads_* 表
+│   └── sql/                      # Spark SQL 全量聚合脚本
 ├── data/                         # 本地数据目录，不提交到 Git
 ├── drivers/                      # 本地 JDBC jar，不提交到 Git
 ├── etl/
@@ -36,23 +50,23 @@
 │   ├── clean_user_behavior.py     # 清洗用户行为数据并写出 Parquet
 │   └── check_cleaned_data.py      # 检查清洗后的 Parquet 数据
 ├── load/
-│   ├── load_to_mysql.py           # 将清洗后的样本数据写入 MySQL
+│   ├── load_to_mysql.py           # 将 10000 行样本明细写入 MySQL
 │   ├── test_spark_mysql_connection.py
 │   └── truncate_user_behavior.py
 ├── sql/
-│   ├── analysis.sql               # SQL 分析语句
+│   ├── analysis.sql               # MySQL 样本表 SQL 练习
 │   └── run_analysis.py            # 使用 Python 执行 analysis.sql
-├── viz/
-│   ├── visualize_analysis.py      # 生成 Plotly 可视化图表
-│   └── output/                    # 图表输出目录，不建议提交到 Git
-├── test/                          # 早期学习和测试脚本
 ├── utils/
-│   ├── config_utils.py            # 读取 .env 并提供 MySQL 配置
+│   ├── ads_utils.py               # Spark SQL -> MySQL ADS 表工具函数
+│   ├── config_utils.py            # 读取 .env 并提供 MySQL/JDBC 配置
 │   ├── mysql_utils.py             # MySQL 工具函数
 │   ├── path_utils.py              # 项目常用路径
-│   └── spark_utils.py             # SparkSession 工具函数
+│   └── spark_utils.py             # SparkSession 与 JDBC 写入工具函数
+├── viz/
+│   ├── visualize_analysis.py      # 从 ads_* 表读取数据并生成 Plotly 图表
+│   └── output/                    # 图表输出目录，不提交到 Git
+├── report.md                      # 项目分析报告
 ├── requirements.txt
-├── config.py                      # 早期配置文件，后续可逐步替换
 ├── create_user_behavior_table.py
 ├── check_user_behavior_table.py
 ├── docker-compose.yml
@@ -74,17 +88,7 @@ conda activate sql-practice
 python -m pip install -r requirements.txt
 ```
 
-当前 `requirements.txt` 包含：
-
-```text
-python-dotenv
-pymysql
-pyspark
-pandas
-plotly
-```
-
-### 3. 配置 Java 和 Hadoop Windows 工具
+### 3. 配置 Java 与 Hadoop Windows 工具
 
 PySpark 本地运行需要 Java。本项目使用 Java 17。
 
@@ -92,13 +96,7 @@ PySpark 本地运行需要 Java。本项目使用 Java 17。
 java -version
 ```
 
-期望版本：
-
-```text
-17.x
-```
-
-Windows 本地写 Parquet 时，还需要 Hadoop Windows 辅助文件：
+Windows 本地运行 Spark/Parquet 时，需要准备 Hadoop Windows 辅助文件：
 
 ```text
 C:\hadoop\bin\winutils.exe
@@ -136,28 +134,15 @@ docker compose up -d
 docker ps
 ```
 
-项目默认数据库配置：
-
-```text
-host: 127.0.0.1
-port: 3307
-database: taobao_analysis
-user: sql_practice
-```
-
-## 配置 .env
-
-在项目根目录创建 `.env`：
+本地连接配置由 `.env` 管理。`.env` 不提交 Git，示例：
 
 ```env
 MYSQL_HOST=127.0.0.1
 MYSQL_PORT=3307
-MYSQL_USER=sql_practice
-MYSQL_PASSWORD=SqlPractice@123456
+MYSQL_USER=your_user
+MYSQL_PASSWORD=your_password
 MYSQL_DATABASE=taobao_analysis
 ```
-
-`.env` 已加入 `.gitignore`，不要提交到 Git。
 
 ## 数据集说明
 
@@ -184,23 +169,35 @@ cart  加购
 buy   购买
 ```
 
-## 运行方式
+清洗后保留字段：
+
+```text
+user_id
+item_id
+category_id
+behavior_type
+behavior_time
+behavior_date
+behavior_hour
+```
+
+## 运行顺序
 
 所有命令建议在项目根目录执行。
 
-### 创建 MySQL 表
+### 1. 创建 MySQL 样本明细表
 
 ```powershell
 python -m create_user_behavior_table
 ```
 
-### 检查原始数据
+### 2. 检查原始数据
 
 ```powershell
 python -m etl.check_raw_data
 ```
 
-### 清洗数据
+### 3. 全量清洗数据
 
 ```powershell
 python -m etl.clean_user_behavior
@@ -212,38 +209,57 @@ python -m etl.clean_user_behavior
 data/cleaned/user_behavior_cleaned.parquet
 ```
 
-### 检查清洗结果
+### 4. 检查清洗结果
 
 ```powershell
 python -m etl.check_cleaned_data
 ```
 
-### 导入样本数据到 MySQL
+### 5. 导入 10000 行样本明细到 MySQL
 
 ```powershell
 python -m load.load_to_mysql
 ```
 
-当前导入逻辑：
+该步骤只写入样本明细，用于 SQL 练习，不承担全量报表分析。
 
-- 读取清洗后的 Parquet 数据
-- 取 10000 行样本
-- 先清空 `user_behavior` 表
-- 再通过 JDBC 追加写入 MySQL
-
-### 测试 Spark 连接 MySQL
+### 6. 构建全量 ADS 结果表
 
 ```powershell
-python -m load.test_spark_mysql_connection
+python -m ads.build_ads
 ```
 
-### 执行 SQL 分析
+`ads/build_ads.py` 会自动扫描：
 
-```powershell
-python -m sql.run_analysis
+```text
+ads/sql/*.sql
 ```
 
-### 生成可视化图表
+每个 SQL 文件会生成一张 MySQL 结果表：
+
+```text
+ads_ + SQL 文件名去掉 .sql
+```
+
+例如：
+
+```text
+ads/sql/daily_pv_uv.sql -> ads_daily_pv_uv
+ads/sql/rf_segment_summary.sql -> ads_rf_segment_summary
+```
+
+当前 ADS 指标包括：
+
+- `ads_behavior_type_count`
+- `ads_category_top_analysis`
+- `ads_conversion_rate`
+- `ads_daily_pv_uv`
+- `ads_hourly_behavior_count`
+- `ads_repurchase_summary`
+- `ads_rf_segment_summary`
+- `ads_top10_item_id`
+
+### 7. 生成可视化图表
 
 ```powershell
 python -m viz.visualize_analysis
@@ -255,44 +271,59 @@ python -m viz.visualize_analysis
 viz/output/
 ```
 
-当前可视化包括：
+`viz/output/` 不提交 Git。
 
-- 行为类型分布柱状图
-- 每日 PV / UV 折线图
-- 每小时行为量柱状图
-- 热门商品 TOP10 横向条形图
+## 指标说明
 
-## 当前 SQL 分析内容
+项目当前覆盖以下指标：
 
-`sql/analysis.sql` 当前包含：
+- 行为类型分布：统计 `pv`、`cart`、`fav`、`buy` 的行为量。
+- 每日 PV/UV：统计每日浏览量和浏览用户数。
+- 每小时行为量：分析用户行为在一天内的活跃时段。
+- 转化漏斗：浏览 -> 收藏/加购 -> 购买。
+- 复购率：购买次数大于等于 2 的购买用户占比。
+- 类目热度 TOP10：按类目总行为量排序，统计浏览、收藏/加购、购买和购买用户数。
+- 商品 TOP10：按商品总行为量排序。
+- RF 用户分层：由于数据集没有金额字段，使用最近购买间隔和购买次数做 RF 分层，替代完整 RFM。
 
-- 总行数
-- 去重用户数
-- 去重商品数
-- 行为类型分布
-- 每日 PV / UV
-- 每小时行为量
-- 购买次数 TOP10 用户
-- 行为次数 TOP10 商品
+## 设计说明
 
-## 当前进度
+本项目不将 1 亿级明细全量写入 MySQL。原因是 MySQL 更适合作为结果查询和可视化支撑，不适合在本地环境承载大规模行为明细分析。
 
-- 已完成 Docker MySQL 环境配置
-- 已完成 Python 读取 `.env` 并连接 MySQL
-- 已完成 MySQL 建表
-- 已完成 PySpark 读取原始 CSV
-- 已完成 PySpark 清洗并写出 Parquet
-- 已完成 Spark 通过本地 JDBC jar 连接 MySQL
-- 已完成清洗样本数据写入 MySQL
-- 已完成 Python 执行 SQL 分析
-- 已完成 Plotly HTML 可视化输出
-- 已将路径、配置、Spark、MySQL 公共逻辑抽取到 `utils/`
+当前分工：
 
-## 注意事项
+```text
+Parquet: 保存清洗后的全量明细
+Spark SQL: 执行全量聚合计算
+MySQL user_behavior: 保存 10000 行样本用于 SQL 练习
+MySQL ads_*: 保存小规模分析结果表
+Plotly: 读取 ads_* 表生成可视化
+```
 
-- 不要提交 `.env`
-- 不要提交 `data/`
-- 不要提交 `drivers/` 下的 JDBC jar
-- 不建议提交 `viz/output/` 下的图表产物
-- 建议从项目根目录使用 `python -m ...` 方式运行脚本
-- VS Code 的运行配置可放在本地 `.vscode/launch.json`
+## Windows 本地 Spark 注意事项
+
+- Java 建议使用 17。
+- Windows 下需要配置 `winutils.exe` 和 `hadoop.dll`。
+- Spark 连接 MySQL 需要本地 MySQL Connector/J jar。
+- 本地 Spark 结束时可能出现临时目录 jar 删除 warning，例如无法删除 `mysql-connector-j-8.4.0.jar`。如果结果表已正常写入 MySQL，该 warning 通常不影响计算结果。
+- 建议使用 `python -m 包名.模块名` 从项目根目录运行脚本。
+
+## Git 注意事项
+
+不要提交以下内容：
+
+```text
+.env
+data/
+drivers/*.jar
+viz/output/
+sql/sql_practice_mysql.session.sql
+```
+
+## 项目报告
+
+项目分析报告见：
+
+```text
+report.md
+```
