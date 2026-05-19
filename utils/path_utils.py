@@ -9,3 +9,4 @@ CLEANED_DATA_PATH = BASE_DIR / "data" / "cleaned" / "user_behavior_cleaned.parqu
 MYSQL_JAR_PATH = BASE_DIR / "drivers" / "mysql-connector-j-8.4.0.jar"
 ANALYSIS_SQL_PATH = BASE_DIR / "sql" / "analysis.sql"
 VIZ_OUTPUT_DIR = BASE_DIR / "viz" / "output"
+ADS_SQL_PATH = BASE_DIR / "ads" / "sql"
