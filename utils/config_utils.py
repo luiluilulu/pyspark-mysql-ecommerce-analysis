@@ -15,3 +15,9 @@ MYSQL_CONFIG = {
     "database": os.getenv("MYSQL_DATABASE"),
     "charset": "utf8mb4",
 }
+
+def get_jdbc_url():
+    return (
+        f"jdbc:mysql://{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}/"
+        f"{MYSQL_CONFIG['database']}?useSSL=false&serverTimezone=Asia/Shanghai"
+    )
