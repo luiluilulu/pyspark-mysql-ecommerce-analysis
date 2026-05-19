@@ -16,7 +16,9 @@ def create_spark(app_name, with_mysql=False):
     )
     if with_mysql:
          builder = builder.config("spark.jars", str(MYSQL_JAR_PATH))
-    return builder.getOrCreate()
+    spark = builder.getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
+    return spark
 
 def write_df_to_mysql(df,table_name,mode="overwrite"):
      (

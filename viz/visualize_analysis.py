@@ -3,7 +3,7 @@ from utils.path_utils import VIZ_OUTPUT_DIR
 
 import pandas as pd
 import plotly.express as px
-from plotly.subplots import make_subplots
+from plotly.subplots import make_subplots #做双y轴图
 import plotly.graph_objects as go
 
 
@@ -23,6 +23,39 @@ def save_fig(fig,filename):
     fig.write_html(str(output_path))
 
     print("saved:",output_path)
+
+def polt_conversion_funnel():
+    sql="""
+        SELECT 
+            step_order,
+            start_users,
+            converted_users
+        FROM ads_conversion_rate
+    """
+    df = query_to_df(sql)
+    
+    pv_users = df[df["step_order"]==1]["start_users"].values[0]
+    interest_users = df[df["step_order"]==1]["converted_users"].values[0]
+    buy_users = df[df["step_order"]==2]["converted_users"].values[0]
+
+    funnel_date ={
+        "stage":["浏览","收藏/加购",'购买'],
+        "users":[int(pv_users),int(interest_users),int(buy_users)]
+    }
+
+    fig = px.funnel(
+        data_frame=funnel_date,
+        x = "users",
+        y = "stage",
+        title="用户行为转化漏斗",
+        labels={
+            "users": "用户数",
+            "stage": "阶段"
+        }
+    )
+    fig.update_traces(textinfo="value+percent initial")
+
+    save_fig(fig,"connversion_funnel.html")
 
 def plot_behavior_type_count():
     sql = """
@@ -160,11 +193,13 @@ def plot_top10_items():
     save_fig(fig,"top10_items.html")
 
 
+
 def main():
     plot_behavior_type_count()
     plot_daily_pv_uv()
     plot_hourly_behavior_count()
     plot_top10_items()
+    polt_conversion_funnel()
 
 if __name__ == "__main__":
     main()
