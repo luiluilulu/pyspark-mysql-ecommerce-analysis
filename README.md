@@ -51,7 +51,6 @@ Parquet 明细层
 │   └── check_cleaned_data.py      # 检查清洗后的 Parquet 数据
 ├── load/
 │   ├── load_to_mysql.py           # 将 10000 行样本明细写入 MySQL
-│   ├── test_spark_mysql_connection.py
 │   └── truncate_user_behavior.py
 ├── sql/
 │   ├── analysis.sql               # MySQL 样本表 SQL 练习
@@ -65,6 +64,7 @@ Parquet 明细层
 ├── viz/
 │   ├── visualize_analysis.py      # 从 ads_* 表读取数据并生成 Plotly 图表
 │   └── output/                    # 图表输出目录，不提交到 Git
+├── pipeline.py                    # 一键执行全流程（clean → ads → vis）
 ├── report.md                      # 项目分析报告
 ├── requirements.txt
 ├── create_user_behavior_table.py
@@ -139,8 +139,8 @@ docker ps
 ```env
 MYSQL_HOST=127.0.0.1
 MYSQL_PORT=3307
-MYSQL_USER=your_user
-MYSQL_PASSWORD=your_password
+MYSQL_USER=sql_practice
+MYSQL_PASSWORD=SqlPractice@123456
 MYSQL_DATABASE=taobao_analysis
 ```
 
@@ -184,6 +184,17 @@ behavior_hour
 ## 运行顺序
 
 所有命令建议在项目根目录执行。
+
+### 一键运行
+
+```powershell
+python pipeline.py                    # 跑全流程（clean → ads → vis）
+python pipeline.py --step clean       # 只跑清洗
+python pipeline.py --step ads         # 只跑聚合
+python pipeline.py --step vis         # 只跑可视化
+```
+
+### 手动逐步运行
 
 ### 1. 创建 MySQL 样本明细表
 

@@ -192,6 +192,19 @@ def plot_top10_items():
     fig.update_yaxes(autorange = "reversed")
     save_fig(fig,"top10_items.html")
 
+def plot_rf_segment_summary():
+    sql ="""
+        SELECT * FROM ads_rf_segment_summary;
+    """
+    df = query_to_df(sql)
+
+    fig = px.pie(
+        data_frame=df,
+        names="user_segment",
+        values="user_cnt",
+        title="RF 用户分层",
+    )
+    save_fig(fig,"rf_segment_summary.html")
 
 
 def main():
@@ -200,6 +213,7 @@ def main():
     plot_hourly_behavior_count()
     plot_top10_items()
     polt_conversion_funnel()
+    plot_rf_segment_summary()
 
 if __name__ == "__main__":
     main()

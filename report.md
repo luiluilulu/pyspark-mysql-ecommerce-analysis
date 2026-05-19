@@ -201,6 +201,8 @@ F = 用户购买次数
 - `daily_pv_uv.html`：每日 PV/UV 双 y 轴折线图。
 - `hourly_behavior_count.html`：每小时行为量柱状图。
 - `top10_items.html`：热门商品 TOP10 横向条形图。
+- `connversion_funnel.html`：用户行为转化漏斗图。
+- `rf_segment.html`：RF 用户分层饼图。
 
 图表默认输出到：
 
@@ -219,12 +221,18 @@ viz/output/
 - `ads/build_ads.py` 自动扫描 `ads/sql/*.sql`，按文件名生成对应的 `ads_*` 表。
 - 保留 MySQL 样本明细表，用于 SQL 学习和口径验证。
 
-## 8. 项目不足与后续优化
+## 8. 已知问题与后续优化
+
+### 已知问题
+
+- Windows 本地 Spark 结束时可能出现临时 jar 删除 warning（`Failed to delete mysql-connector-j-8.4.0.jar`）。原因是 Windows 文件锁机制导致 Spark 关闭时无法释放已加载的 jar 文件，不影响计算结果。已在 `spark_utils.py` 中通过 `setLogLevel("ERROR")` 抑制日志噪音。
+
+### 后续优化
 
 - 当前转化漏斗是用户级宽松漏斗，未严格校验同一商品和时间顺序；后续可升级为有序漏斗。
 - 数据集缺少订单金额字段，因此无法完成完整 RFM，只能做 RF 分层。
 - 当前可视化仍是静态 HTML 输出，后续可升级为 Streamlit Dashboard。
-- 当前流程还不是一键 pipeline，后续可增加 `pipeline.py` 串联清洗、ADS 构建和可视化。
+- 已实现 `pipeline.py` 一键执行全流程，支持 `--step` 参数按需运行单个步骤。
 - 本地 Windows Spark 环境会出现临时 jar 删除 warning，生产环境通常应部署在 Linux、YARN 或容器化环境中。
 
 ## 9. 简历表达参考
