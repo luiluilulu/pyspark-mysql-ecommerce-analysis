@@ -2,14 +2,15 @@ import argparse
 import sys
 import subprocess
 
-STEPS = ['clean','ads','vis']
+STEPS = ['clean','ads','vis','quality']
 
 def run_step(step_name):
 
     command = {
         "clean":[sys.executable,"-m","etl.clean_user_behavior"],
         'ads' : [sys.executable,"-m","ads.build_ads"],
-        'vis' : [sys.executable,'-m','viz.visualize_analysis']
+        'vis' : [sys.executable,'-m','viz.visualize_analysis'],
+        'quality':[sys.executable,"-m","etl.quality_check"]
     }
     cmd = command[step_name]
     print(f"\n{'='*40}")

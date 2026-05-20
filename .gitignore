@@ -34,3 +34,4 @@ drivers/*.jar
 .ipynb_checkpoints/
 
 sql/sql_practice_mysql.session.sql
+interview_qa.md

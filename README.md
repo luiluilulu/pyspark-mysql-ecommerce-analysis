@@ -7,11 +7,11 @@
 ## 项目流程
 
 ```text
-原始 CSV
+data/ods/ 原始 CSV (ODS)
     -> PySpark 全量清洗
-    -> Parquet 明细层
+    -> data/dwd/ Parquet 明细层 (DWD)
     -> Spark SQL 全量聚合
-    -> MySQL ads_* 结果表
+    -> MySQL ads_* 结果表 (ADS)
     -> Plotly 可视化
 ```
 
@@ -43,7 +43,9 @@ Parquet 明细层
 ├── ads/
 │   ├── build_ads.py              # 扫描 ads/sql/*.sql，批量构建 MySQL ads_* 表
 │   └── sql/                      # Spark SQL 全量聚合脚本
-├── data/                         # 本地数据目录，不提交到 Git
+├── data/                         # 数据目录（ODS/DWD），不提交到 Git
+│   ├── ods/                       # ODS 原始层：UserBehavior.csv
+│   └── dwd/                       # DWD 明细层：清洗后 Parquet
 ├── drivers/                      # 本地 JDBC jar，不提交到 Git
 ├── etl/
 │   ├── check_raw_data.py          # 检查原始 CSV 数据
@@ -146,10 +148,10 @@ MYSQL_DATABASE=taobao_analysis
 
 ## 数据集说明
 
-将原始 CSV 文件放到：
+将原始 CSV 文件放到 ODS 层：
 
 ```text
-data/UserBehavior.csv
+data/ods/UserBehavior.csv
 ```
 
 原始数据文件不提交到 Git。
@@ -217,7 +219,7 @@ python -m etl.clean_user_behavior
 输出目录：
 
 ```text
-data/cleaned/user_behavior_cleaned.parquet
+data/dwd/user_behavior_cleaned.parquet
 ```
 
 ### 4. 检查清洗结果
@@ -296,6 +298,18 @@ viz/output/
 - 类目热度 TOP10：按类目总行为量排序，统计浏览、收藏/加购、购买和购买用户数。
 - 商品 TOP10：按商品总行为量排序。
 - RF 用户分层：由于数据集没有金额字段，使用最近购买间隔和购买次数做 RF 分层，替代完整 RFM。
+
+## 数仓分层
+
+项目采用简化的离线数仓分层架构：
+
+| 层 | 存储 | 内容 |
+| --- | --- | --- |
+| **ODS** 原始层 | `data/ods/` | 原始 CSV，不做任何修改 |
+| **DWD** 明细层 | `data/dwd/` | 清洗后 Parquet，去脏去重，加工时间字段 |
+| **ADS** 应用层 | MySQL `ads_*` 表 | 聚合指标结果，供可视化读取 |
+
+DWS 汇总层在本项目中未独立建层——Spark SQL 直接从 DWD 聚合到 ADS，中间汇总逻辑内聚在 `ads/sql/*.sql` 中。
 
 ## 设计说明
 
